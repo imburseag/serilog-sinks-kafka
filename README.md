@@ -1,5 +1,7 @@
 # serilog-sinks-kafka
 
+[![CircleCI](https://circleci.com/gh/jonhoare/serilog-sinks-kafka/tree/master.svg?style=svg)](https://circleci.com/gh/jonhoare/serilog-sinks-kafka/tree/master)
+
 A Serilog sink that writes events to Kafka Endpoints (Including Azure Event Hubs).
 
 ## Usage
