@@ -1,0 +1,28 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <IsPackable>true</IsPackable>
+    <PackageId>Serilog.Sinks.Kafka</PackageId>
+    <Title>Serilog.Sinks.Kafka</Title>
+    <Authors>Jon Hoare</Authors>
+    <Description>Serilog event sink that writes to Kafka endpoints including Azure Event Hubs.</Description>
+    <PackageDescription>Serilog event sink that writes to Kafka endpoints including Azure Event Hubs.</PackageDescription>
+    <RepositoryUrl>https://github.com/jonhoare/serilog-sinks-kafka</RepositoryUrl>
+    <PackageIconUrl>http://serilog.net/images/serilog-sink-nuget.png</PackageIconUrl>
+    <Tags>seilog logging azure kafka</Tags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Confluent.Kafka" Version="1.1.0" />
+    <PackageReference Include="Serilog" Version="2.8.0" />
+    <PackageReference Include="Serilog.Sinks.PeriodicBatching" Version="2.1.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="cacert.pem" Pack="true">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>

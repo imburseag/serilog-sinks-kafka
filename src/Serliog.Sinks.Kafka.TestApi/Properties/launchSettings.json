@@ -1,0 +1,12 @@
+﻿{
+  "profiles": {
+    "Serliog.Sinks.Kafka.TestApi": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "applicationUrl": "http://localhost:5050",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    }
+  }
+}

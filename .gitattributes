@@ -1,0 +1,5 @@
+* text=auto
+.circleci/**/*.* text eol=LF
+.helm/**/*.* text eol=LF
+scripts/**/*.* text eol=LF
+docker/**/*.* text eol=LF

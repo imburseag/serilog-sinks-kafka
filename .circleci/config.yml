@@ -1,0 +1,55 @@
+version: 2
+
+jobs:
+  build:
+    docker:
+      - image: "circleci/buildpack-deps"
+    steps:
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - checkout
+      - run:
+          name: Build
+          command: dotnet build ./src
+  package:
+    docker:
+      - image: "circleci/buildpack-deps"
+    steps:
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - checkout
+      - run:
+          name: Setup SEM_VERSION Environment Variable
+          command: echo 'SEM_VERSION=$(echo $CIRCLE_TAG | sed -n "s/^release-\(.*\)/\1/p")' >> $BASH_ENV
+      - run:
+          name: Build
+          command: dotnet build ./src
+      - run:
+          name: Package
+          command: dotnet pack ./src/Serilog.Sinks.Kafka/Serilog.Sinks.Kafka.csproj --no-build -p:PackageVersion=$SEM_VERSION --output ./nupkgs
+      # - run:
+      #     name: Push Package to NuGet
+      #     command: nuget push ./nupkgs/Serilog.Sinks.Kafka.$SEM_VERSION.nupkg
+
+workflows:
+  version: 2
+  pr_workflow:
+    jobs:
+      - build:
+          filters:
+            branches:
+              ignore: master
+  merge_workflow:
+    jobs:
+      - build:
+          filters:
+            branches:
+              only: master
+  tag_workflow:
+    jobs:
+      - package:
+          filters:
+            tags:
+              only: /^release-(.*)/
+            branches:
+              ignore: /.*/
