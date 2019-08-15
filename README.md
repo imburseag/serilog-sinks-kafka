@@ -77,7 +77,7 @@ A copy of the CA Certificates for Azure are included in this package and will be
           "bootstrapServers": "my-event-hub-instance.servicebus.windows.net:9093",
           "saslUsername": "$ConnectionString",
           "saslPassword": "my-event-hub-instance-connection-string",
-          "topic": "logstash",
+          "topic": "logs",
           "sslCaLocation": "./cacert.pem",
           "saslMechanism": "Plain",
           "securityProtocol": "SaslSsl"
