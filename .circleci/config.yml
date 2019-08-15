@@ -27,9 +27,9 @@ jobs:
       - run:
           name: Package
           command: dotnet pack ./src/Serilog.Sinks.Kafka/Serilog.Sinks.Kafka.csproj --no-build -p:PackageVersion=$SEM_VERSION --output ./nupkgs
-      # - run:
-      #     name: Push Package to NuGet
-      #     command: nuget push ./nupkgs/Serilog.Sinks.Kafka.$SEM_VERSION.nupkg
+      - run:
+          name: Push Package to NuGet
+          command: dotnet nuget push ./nupkgs/Serilog.Sinks.Kafka.$SEM_VERSION.nupkg -k $NUGET_API_KEY -s https://api.nuget.org/v3/index.json
 
 workflows:
   version: 2
