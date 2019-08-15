@@ -20,7 +20,7 @@ jobs:
       - checkout
       - run:
           name: Setup SEM_VERSION Environment Variable
-          command: echo 'SEM_VERSION=$(echo $CIRCLE_TAG | sed -n "s/^release-\(.*\)/\1/p")' >> $BASH_ENV
+          command: echo 'SEM_VERSION=$(echo $CIRCLE_TAG | sed -n "s/^v\(.*\)/\1/p")' >> $BASH_ENV
       - run:
           name: Build
           command: dotnet build ./src
@@ -50,6 +50,6 @@ workflows:
       - package:
           filters:
             tags:
-              only: /^release-(.*)/
+              only: /^v(.*)/
             branches:
               ignore: /.*/
