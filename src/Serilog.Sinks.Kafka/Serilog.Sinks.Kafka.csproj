@@ -3,11 +3,11 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <IsPackable>true</IsPackable>
-    <PackageId>Serilog.Sinks.Kafka</PackageId>
-    <Title>Serilog.Sinks.Kafka</Title>
+    <PackageId>Serilog.Sinks.Kafka.v2</PackageId>
+    <Title>Serilog.Sinks.Kafka.v2</Title>
     <Authors>Jon Hoare</Authors>
-    <Description>Serilog event sink that writes to Kafka endpoints including Azure Event Hubs.</Description>
-    <PackageDescription>Serilog event sink that writes to Kafka endpoints including Azure Event Hubs.</PackageDescription>
+    <Description>Serilog event sink that writes to Kafka endpoints including Azure Event Hubs. This sink works with Serilog Version >2.8.0</Description>
+    <PackageDescription>Serilog event sink that writes to Kafka endpoints including Azure Event Hubs. This sink works with Serilog Version >2.8.0</PackageDescription>
     <RepositoryUrl>https://github.com/jonhoare/serilog-sinks-kafka</RepositoryUrl>
     <PackageIconUrl>http://serilog.net/images/serilog-sink-nuget.png</PackageIconUrl>
     <Tags>seilog logging azure kafka</Tags>
