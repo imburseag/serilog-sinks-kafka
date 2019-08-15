@@ -32,8 +32,7 @@ Log.Logger = new LoggerConfiguration()
 * sslCaLocation - (Optional) Location of the SSL CA Certificates This is required for Azure Event Hubs and should be set to `./cacert.pem` as this package includes the Azure carcert.pem file which is copied into your binary output directory.
 
 
-## Configuration for a local Kafka instance
-
+## Configuration for a local Kafka instance using appsettings
 ```
 {
   "Serilog": {
@@ -64,8 +63,37 @@ Can also be configured to be used with Azure Event Hubs
 
 ## Configuration for Azure Event Hubs instance
 
-A copy of the CA Certificates for Azure are included in this package and will be copied to your output directory as `cacert.pem`
+You will need to ensure you have a copy of the Azure CA Certificates and define the location of this cert in the `sslCaLocation`.
 
+You can download a copy of the Azure CA Certificate [here](./certs/cacert.pem).
+
+Place this in you projects root directory and ensure it is copied to the build output in your csproj.
+
+```
+  <ItemGroup>
+    <None Include="cacert.pem">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+```
+
+### Configuration for Azure Event Hubs.
+```
+Log.Logger = new LoggerConfiguration()
+    .WriteTo.Kafka(
+      batchSizeLimit: 50,
+      period: 5,
+      bootstrapServers: "my-event-hub-instance.servicebus.windows.net:9093",
+      saslUsername: "$ConnectionString",
+      saslPassword: "my-event-hub-instance-connection-string",
+      topic: "logs",
+      sslCaLocation: "./cacert.pem",
+      saslMechanism: SaslMechanism.Plain,
+      securityProtocol: SecurityProtocol.SaslSsl)
+    .CreateLogger();
+```
+
+### Or using appsettings...
 ```
 {
   "Serilog": {

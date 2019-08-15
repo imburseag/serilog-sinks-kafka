@@ -19,10 +19,4 @@
     <PackageReference Include="Serilog.Sinks.PeriodicBatching" Version="2.1.0" />
   </ItemGroup>
 
-  <ItemGroup>
-    <None Include="cacert.pem" Pack="true">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-
 </Project>
