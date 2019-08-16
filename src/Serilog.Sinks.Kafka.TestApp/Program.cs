@@ -22,6 +22,8 @@ namespace Serilog.Sinks.Kafka.TestApp
 
             Console.WriteLine("Application Running...");
             Console.ReadLine();
+
+            Log.CloseAndFlush();
         }
     }
 }

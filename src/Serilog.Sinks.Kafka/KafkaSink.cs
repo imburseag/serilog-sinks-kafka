@@ -61,12 +61,6 @@ namespace Serilog.Sinks.Kafka
                 }
             }
         }
-
-        protected override void Dispose(bool disposing)
-        {
-            producer?.Dispose();
-            base.Dispose(disposing);
-        }
     }
 
     public static class LoggerConfigurationKafkaExtensions
