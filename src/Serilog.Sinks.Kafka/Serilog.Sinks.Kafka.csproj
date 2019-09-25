@@ -16,7 +16,7 @@
   <ItemGroup>
     <PackageReference Include="Confluent.Kafka" Version="1.1.0" />
     <PackageReference Include="Serilog" Version="2.8.0" />
-    <PackageReference Include="Serilog.Sinks.PeriodicBatching" Version="2.1.0" />
+    <PackageReference Include="Serilog.Sinks.PeriodicBatching" Version="2.2.0" />
   </ItemGroup>
 
 </Project>
