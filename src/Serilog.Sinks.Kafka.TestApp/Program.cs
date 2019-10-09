@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.Configuration;
-using System;
 using System.IO;
 
 namespace Serilog.Sinks.Kafka.TestApp
@@ -19,9 +18,6 @@ namespace Serilog.Sinks.Kafka.TestApp
                 .CreateLogger();
 
             Log.Information("Console Application Test!");
-
-            Console.WriteLine("Application Running...");
-            Console.ReadLine();
 
             Log.CloseAndFlush();
         }

@@ -15,7 +15,7 @@ namespace Serilog.Sinks.Kafka
 {
     public class KafkaSink : PeriodicBatchingSink
     {
-        private string topic;
+        private TopicPartition topic;
         private IProducer<Null, byte[]> producer;
         private ITextFormatter formatter;
 
@@ -39,27 +39,31 @@ namespace Serilog.Sinks.Kafka
                 SaslUsername = saslUsername,
                 SaslPassword = saslPassword,
                 ApiVersionFallbackMs = 0,
-                //Debug = "security,broker,protocol"
+                EnableDeliveryReports = false
             };
 
             producer = new ProducerBuilder<Null, byte[]>(config)
                 .Build();
 
             formatter = new Formatting.Json.JsonFormatter(renderMessage: true);
-            this.topic = topic;
+            this.topic = new TopicPartition(topic, Partition.Any);
         }
 
         protected override async Task EmitBatchAsync(IEnumerable<LogEvent> events)
         {
+            var tasks = new List<Task>();
+
             foreach (var logEvent in events)
             {
                 using (var render = new StringWriter(CultureInfo.InvariantCulture))
                 {
                     formatter.Format(logEvent, render);
                     var message = new Message<Null, byte[]> { Value = Encoding.UTF8.GetBytes(render.ToString()) };
-                    await producer.ProduceAsync(topic, message);
+                    tasks.Add(producer.ProduceAsync(topic, message));
                 }
             }
+
+            await Task.WhenAll(tasks);
         }
     }
 
