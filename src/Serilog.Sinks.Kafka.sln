@@ -5,9 +5,9 @@ VisualStudioVersion = 16.0.29123.88
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Serilog.Sinks.Kafka", "Serilog.Sinks.Kafka\Serilog.Sinks.Kafka.csproj", "{81F39D8A-9730-4D5A-BC92-04EC93526652}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Serilog.Sinks.Kafka.TestApp", "Serilog.Sinks.Kafka.TestApp\Serilog.Sinks.Kafka.TestApp.csproj", "{A96B550B-C1BD-4227-BC20-12D7A02277BC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Serilog.Sinks.Kafka.TestApp", "Serilog.Sinks.Kafka.TestApp\Serilog.Sinks.Kafka.TestApp.csproj", "{A96B550B-C1BD-4227-BC20-12D7A02277BC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Serliog.Sinks.Kafka.TestApi", "Serliog.Sinks.Kafka.TestApi\Serliog.Sinks.Kafka.TestApi.csproj", "{EB02A379-8501-43FD-B8F9-730B0AFBDA44}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Serilog.Sinks.Kafka.TestApi", "Serilog.Sinks.Kafka.TestApi\Serilog.Sinks.Kafka.TestApi.csproj", "{EB02A379-8501-43FD-B8F9-730B0AFBDA44}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

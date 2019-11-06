@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Hosting;
 using Serilog;
 
-namespace Serliog.Sinks.Kafka.TestApi
+namespace Serilog.Sinks.Kafka.TestApi
 {
     public class Program
     {
