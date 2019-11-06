@@ -3,20 +3,16 @@ version: 2
 jobs:
   build:
     docker:
-      - image: "mcr.microsoft.com/dotnet/core/sdk:2.2"
+      - image: "mcr.microsoft.com/dotnet/core/sdk:3.0"
     steps:
-      - setup_remote_docker:
-          docker_layer_caching: true
       - checkout
       - run:
           name: Build
           command: dotnet build ./src
   package:
     docker:
-      - image: "mcr.microsoft.com/dotnet/core/sdk:2.2"
+      - image: "mcr.microsoft.com/dotnet/core/sdk:3.0"
     steps:
-      - setup_remote_docker:
-          docker_layer_caching: true
       - checkout
       - run:
           name: Setup SEM_VERSION Environment Variable

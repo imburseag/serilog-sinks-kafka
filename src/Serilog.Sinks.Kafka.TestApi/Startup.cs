@@ -6,7 +6,7 @@ using Serilog;
 using Serilog.Debugging;
 using System;
 
-namespace Serliog.Sinks.Kafka.TestApi
+namespace Serilog.Sinks.Kafka.TestApi
 {
     public class Startup
     {
