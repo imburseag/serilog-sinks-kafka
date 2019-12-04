@@ -10,7 +10,7 @@ This sink works with the following packages
 
 * Serilog >v2.9.0
 * Serilog.Sinks.PeriodicBatching >v2.2.0
-* Confluent.Kafka >v1.2.0
+* Confluent.Kafka >v1.3.0
 
 ## Usage
 
