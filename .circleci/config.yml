@@ -3,7 +3,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: "mcr.microsoft.com/dotnet/core/sdk:3.0"
+      - image: "mcr.microsoft.com/dotnet/core/sdk:3.1"
     steps:
       - checkout
       - run:
@@ -11,7 +11,7 @@ jobs:
           command: dotnet build ./src
   package:
     docker:
-      - image: "mcr.microsoft.com/dotnet/core/sdk:3.0"
+      - image: "mcr.microsoft.com/dotnet/core/sdk:3.1"
     steps:
       - checkout
       - run:
@@ -22,7 +22,7 @@ jobs:
           command: dotnet build ./src
       - run:
           name: Package
-          command: dotnet pack ./src/Serilog.Sinks.Kafka/Serilog.Sinks.Kafka.csproj --no-build -p:PackageVersion=$SEM_VERSION --output ../../nupkgs
+          command: dotnet pack ./src/Serilog.Sinks.Kafka/Serilog.Sinks.Kafka.csproj --no-build -p:PackageVersion=$SEM_VERSION --output ./nupkgs
       - run:
           name: Push Package to NuGet
           command: dotnet nuget push ./nupkgs/Serilog.Sinks.Confluent.Kafka.$SEM_VERSION.nupkg -k $NUGET_API_KEY -s https://api.nuget.org/v3/index.json
