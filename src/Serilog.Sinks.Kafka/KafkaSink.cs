@@ -30,17 +30,16 @@ namespace Serilog.Sinks.Kafka
             string saslPassword,
             string sslCaLocation) : base(batchSizeLimit, TimeSpan.FromSeconds(period))
         {
-            var config = new ProducerConfig
-            {
-                BootstrapServers = bootstrapServers,
-                SecurityProtocol = securityProtocol,
-                SaslMechanism = saslMechanism,
-                SslCaLocation = string.IsNullOrEmpty(sslCaLocation) ? null : Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), sslCaLocation),
-                SaslUsername = saslUsername,
-                SaslPassword = saslPassword,
-                ApiVersionFallbackMs = 0,
-                EnableDeliveryReports = false
-            };
+            var config = new ProducerConfig()
+                .SetValue("ApiVersionFallbackMs", 0)
+                .SetValue("EnableDeliveryReports", false)
+                .LoadFromEnvironmentVariables()
+                .SetValue("BootstrapServers", bootstrapServers)
+                .SetValue("SecurityProtocol", securityProtocol)
+                .SetValue("SaslMechanism", saslMechanism)
+                .SetValue("SslCaLocation", string.IsNullOrEmpty(sslCaLocation) ? null : Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), sslCaLocation))
+                .SetValue("SaslUsername", saslUsername)
+                .SetValue("SaslPassword", saslPassword);
 
             producer = new ProducerBuilder<Null, byte[]>(config)
                 .Build();

@@ -124,3 +124,38 @@ Log.Logger = new LoggerConfiguration()
 }
 
 ```
+
+## Extra Configuration using Environment Variables
+
+You can also specify `ProducerConfig` configuration using EnvironmentVariables.
+These settings can be specified as the following EnvironmentVariables...
+
+`SERILOG__KAFKA__ProducerConfigPropertyName`
+
+or
+
+`SERILOG__KAFKA__PRODUCER_CONFIG_PROPERTY_NAME`.
+
+`SERILOG__KAFKA__` is first stripped from the Environment Variable Name and the remaining name is lowered and single `_` is replaced with `string.Empty`.
+
+The `ProducerConfig` is first loaded from any specified Environment Variables. Then any of the configuration passed into the KafkaSink constructor will override the Environment Variables.
+This is to ensure backwards compatability at the moment but passing this configuration into the KafkaSink constructor will be removed in the future.
+
+You can check what properties are supported at the following github https://github.com/confluentinc/confluent-kafka-dotnet/blob/6128bdf65fa79fbb14210d73970fbd4f7940d4b7/src/Confluent.Kafka/Config_gen.cs#L830
+
+
+## Azure EventHubs Recommended Configuration
+If you are running against an Azure EventHub, the following configuration is recommended. 
+
+https://github.com/Azure/azure-event-hubs-for-kafka/blob/master/CONFIGURATION.md
+
+These EnvironmentVariables can be set...
+
+```
+SERILOG__KAFKA__SocketKeepaliveEnable=true
+SERILOG__KAFKA__MetadataMaxAgeMs=180000
+SERILOG__KAFKA__RequestTimeoutMs=30000
+SERILOG__KAFKA__Partitioner=ConsistentRandom
+SERILOG__KAFKA__EnableIdempotence=false
+SERILOG__KAFKA__CompressionType=None
+```        

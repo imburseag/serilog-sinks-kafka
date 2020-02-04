@@ -5,7 +5,14 @@
       "launchBrowser": true,
       "applicationUrl": "http://localhost:5050",
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "SERILOG__KAFKA__BOOTSTRAP_SERVERS": "localhost:9092",
+        "SERILOG__KAFKA__SocketKeepaliveEnable": "true",
+        "SERILOG__KAFKA__MetadataMaxAgeMs": "180000",
+        "SERILOG__KAFKA__RequestTimeoutMs": "30000",
+        "SERILOG__KAFKA__Partitioner": "ConsistentRandom",
+        "SERILOG__KAFKA__EnableIdempotence": "false",
+        "SERILOG__KAFKA__CompressionType": "None"
       }
     }
   }
