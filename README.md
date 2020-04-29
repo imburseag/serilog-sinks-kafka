@@ -9,8 +9,8 @@ A Serilog sink that writes events to Kafka Endpoints (Including Azure Event Hubs
 This sink works with the following packages
 
 * Serilog >v2.9.0
-* Serilog.Sinks.PeriodicBatching >v2.2.0
-* Confluent.Kafka >v1.3.0
+* Serilog.Sinks.PeriodicBatching >v2.3.0
+* Confluent.Kafka >v1.4.0
 
 ## Usage
 
