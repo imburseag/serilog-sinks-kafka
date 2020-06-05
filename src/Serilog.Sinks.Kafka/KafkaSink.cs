@@ -18,6 +18,7 @@ namespace Serilog.Sinks.Kafka
         private TopicPartition topic;
         private IProducer<Null, byte[]> producer;
         private ITextFormatter formatter;
+        private readonly Func<LogEvent, string> _topicDecider;
 
         public KafkaSink(
             string bootstrapServers,
@@ -28,24 +29,35 @@ namespace Serilog.Sinks.Kafka
             string topic,
             string saslUsername,
             string saslPassword,
-            string sslCaLocation) : base(batchSizeLimit, TimeSpan.FromSeconds(period))
+            string sslCaLocation,
+            ITextFormatter formatter = null) : base(batchSizeLimit, TimeSpan.FromSeconds(period))
         {
-            var config = new ProducerConfig()
-                .SetValue("ApiVersionFallbackMs", 0)
-                .SetValue("EnableDeliveryReports", false)
-                .LoadFromEnvironmentVariables()
-                .SetValue("BootstrapServers", bootstrapServers)
-                .SetValue("SecurityProtocol", securityProtocol)
-                .SetValue("SaslMechanism", saslMechanism)
-                .SetValue("SslCaLocation", string.IsNullOrEmpty(sslCaLocation) ? null : Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), sslCaLocation))
-                .SetValue("SaslUsername", saslUsername)
-                .SetValue("SaslPassword", saslPassword);
+            ConfigureKafkaConnection(bootstrapServers, securityProtocol, saslMechanism, saslUsername, 
+                saslPassword, sslCaLocation);
 
-            producer = new ProducerBuilder<Null, byte[]>(config)
-                .Build();
+            this.formatter = formatter ?? new Formatting.Json.JsonFormatter(renderMessage: true);
 
-            formatter = new Formatting.Json.JsonFormatter(renderMessage: true);
             this.topic = new TopicPartition(topic, Partition.Any);
+        }
+
+        public KafkaSink(
+            string bootstrapServers,
+            int batchSizeLimit,
+            int period,
+            SecurityProtocol securityProtocol,
+            SaslMechanism saslMechanism,
+            Func<LogEvent, string> topicDecider,
+            string saslUsername,
+            string saslPassword,
+            string sslCaLocation,
+            ITextFormatter formatter = null) : base(batchSizeLimit, TimeSpan.FromSeconds(period))
+        {
+            ConfigureKafkaConnection(bootstrapServers, securityProtocol, saslMechanism, saslUsername,
+                saslPassword, sslCaLocation);
+
+            this.formatter = formatter ?? new Formatting.Json.JsonFormatter(renderMessage: true);
+
+            this._topicDecider = topicDecider;
         }
 
         protected override async Task EmitBatchAsync(IEnumerable<LogEvent> events)
@@ -58,11 +70,37 @@ namespace Serilog.Sinks.Kafka
                 {
                     formatter.Format(logEvent, render);
                     var message = new Message<Null, byte[]> { Value = Encoding.UTF8.GetBytes(render.ToString()) };
-                    tasks.Add(producer.ProduceAsync(topic, message));
+
+                    var kakfaTopicPartition = _topicDecider != null
+                        ? new TopicPartition(_topicDecider(logEvent), Partition.Any)
+                        : topic;
+
+                    tasks.Add(producer.ProduceAsync(kakfaTopicPartition, message));
                 }
             }
 
             await Task.WhenAll(tasks);
+        }
+
+        private void ConfigureKafkaConnection(string bootstrapServers, SecurityProtocol securityProtocol,
+            SaslMechanism saslMechanism, string saslUsername, string saslPassword, string sslCaLocation)
+        {
+            var config = new ProducerConfig()
+                .SetValue("ApiVersionFallbackMs", 0)
+                .SetValue("EnableDeliveryReports", false)
+                .LoadFromEnvironmentVariables()
+                .SetValue("BootstrapServers", bootstrapServers)
+                .SetValue("SecurityProtocol", securityProtocol)
+                .SetValue("SaslMechanism", saslMechanism)
+                .SetValue("SslCaLocation",
+                    string.IsNullOrEmpty(sslCaLocation)
+                        ? null
+                        : Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), sslCaLocation))
+                .SetValue("SaslUsername", saslUsername)
+                .SetValue("SaslPassword", saslPassword);
+
+            producer = new ProducerBuilder<Null, byte[]>(config)
+                .Build();
         }
     }
 
@@ -87,7 +125,8 @@ namespace Serilog.Sinks.Kafka
             string topic = "logs",
             string saslUsername = null,
             string saslPassword = null,
-            string sslCaLocation = null)
+            string sslCaLocation = null, 
+            ITextFormatter formatter = null)
         {
             var sink = new KafkaSink(
                 bootstrapServers,
@@ -98,7 +137,36 @@ namespace Serilog.Sinks.Kafka
                 topic,
                 saslUsername,
                 saslPassword,
-                sslCaLocation);
+                sslCaLocation, 
+                formatter);
+
+            return loggerConfiguration.Sink(sink);
+        }
+
+        public static LoggerConfiguration Kafka(
+            this LoggerSinkConfiguration loggerConfiguration,
+            Func<LogEvent, string> topicDecider,
+            string bootstrapServers = "localhost:9092",
+            int batchSizeLimit = 50,
+            int period = 5,
+            SecurityProtocol securityProtocol = SecurityProtocol.Plaintext,
+            SaslMechanism saslMechanism = SaslMechanism.Plain,
+            string saslUsername = null,
+            string saslPassword = null,
+            string sslCaLocation = null,
+            ITextFormatter formatter = null)
+        {
+            var sink = new KafkaSink(
+                bootstrapServers,
+                batchSizeLimit,
+                period,
+                securityProtocol,
+                saslMechanism,
+                topicDecider,
+                saslUsername,
+                saslPassword,
+                sslCaLocation,
+                formatter);
 
             return loggerConfiguration.Sink(sink);
         }

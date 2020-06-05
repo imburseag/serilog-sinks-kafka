@@ -9,8 +9,8 @@ A Serilog sink that writes events to Kafka Endpoints (Including Azure Event Hubs
 This sink works with the following packages
 
 * Serilog >v2.9.0
-* Serilog.Sinks.PeriodicBatching >v2.2.0
-* Confluent.Kafka >v1.3.0
+* Serilog.Sinks.PeriodicBatching >v2.3.0
+* Confluent.Kafka >v1.4.0
 
 ## Usage
 
@@ -21,15 +21,17 @@ Log.Logger = new LoggerConfiguration()
 ```
 
 ### Parameters
-* bootstrapServers - Comma separated list of Kafka Bootstrap Servers. Defaults to "localhost:9092"
-* batchSizeLimit - Maximum number of logs to batch. Defaults to 50
-* period - The period in seconds to send batches of logs. Defaults to 5 seconds
-* securityProtocol -  SecurityProtocol.Plaintext
-* saslMechanism - The SASL Mecahnism. Defaults to SaslMechanism.Plain
-* topic - Name of the Kafka topic. Defaults to "logs"
-* saslUsername - (Optional) Username for SASL. This is required for Azure Event Hubs and should be set to `$ConnectionString`
-* saslPassword - (Optional) Password for SASL. This is required for Azure Event Hubs and is your entire Connection String.
-* sslCaLocation - (Optional) Location of the SSL CA Certificates This is required for Azure Event Hubs and should be set to `./cacert.pem` as this package includes the Azure carcert.pem file which is copied into your binary output directory.
+* **bootstrapServers** - Comma separated list of Kafka Bootstrap Servers. Defaults to "localhost:9092"
+* **batchSizeLimit** - Maximum number of logs to batch. Defaults to 50
+* **period** - The period in seconds to send batches of logs. Defaults to 5 seconds
+* **securityProtocol** -  SecurityProtocol.Plaintext
+* **saslMechanism** - The SASL Mecahnism. Defaults to SaslMechanism.Plain
+* **topic** - Name of the Kafka topic. Defaults to "logs"
+* **topicDecider** - Alternative to a static/constant "topic" value.  Function that can be used to determine the topic to be written to at runtime (example below)
+* **saslUsername** - (Optional) Username for SASL. This is required for Azure Event Hubs and should be set to `$ConnectionString`
+* **saslPassword** - (Optional) Password for SASL. This is required for Azure Event Hubs and is your entire Connection String.
+* **sslCaLocation** - (Optional) Location of the SSL CA Certificates This is required for Azure Event Hubs and should be set to `./cacert.pem` as this package includes the Azure carcert.pem file which is copied into your binary output directory.
+* **formatter** - optional `ITextFormatter` you can specify to format log entries.  Defaults to the standard `JsonFormatter` with `renderMessage` set to `true`.
 
 
 ## Configuration for a local Kafka instance using appsettings
@@ -59,7 +61,31 @@ Log.Logger = new LoggerConfiguration()
 
 ```
 
-Can also be configured to be used with Azure Event Hubs
+## Configuration with a `topicDecider` and a custom formatter
+
+```csharp
+Log.Logger = new LoggerConfiguration()
+              .WriteTo.Kafka(GetTopicName, "localhost:9092",
+                    formatter: new CustomElasticsearchFormatter("LogEntry"));
+              .CreateLogger();
+```
+
+The code above specifies `GetTopicName` as the `topicDecider`.  Here is a sample implementation:
+
+```csharp
+private static string GetTopicName(LogEvent logEntry)
+{
+    var logInfo = logEntry.Properties["LogEntry"] as StructureValue;
+    var lookup = logInfo?.Properties.FirstOrDefault(a => a.Name == "some_property_name");
+
+    return (string.Equals(lookup, "valueForTopicA")) 
+      ? "topicA"
+      : "topicB";    
+}
+```
+
+The above code also references a `CustomElasticSearchFormatter` that uses the whole `LogEntry` as the input to the formatter.  This is a custom formatter that inherits from `ElasticsearchJsonFormatter` in the `Serilog.Sinks.Elasticsearch` NuGet package, but can be any `ITextFormatter` that you want to use when sending the log entry to Kafka.  Note that if you omit the formatter param (which is fine), the standard `JsonFormatter` will be used (with the `renderMessage` parameter set to `true`).
+
 
 ## Configuration for Azure Event Hubs instance
 
