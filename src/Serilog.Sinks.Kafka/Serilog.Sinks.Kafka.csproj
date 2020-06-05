@@ -1,13 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFrameworks>netstandard2.0;net45</TargetFrameworks>
     <IsPackable>true</IsPackable>
     <PackageId>Serilog.Sinks.Confluent.Kafka</PackageId>
     <Title>Serilog.Sinks.Confluent.Kafka</Title>
     <Authors>Jon Hoare</Authors>
-    <Description>Serilog event sink that writes to Kafka endpoints, using Confluent.Kafka, including Azure Event Hubs. This sink works with Serilog Version >2.8.0</Description>
-    <PackageDescription>Serilog event sink that writes to Kafka endpoints, using Confluent.Kafka, including Azure Event Hubs. This sink works with Serilog Version >2.8.0</PackageDescription>
+    <Description>Serilog event sink that writes to Kafka endpoints, using Confluent.Kafka, including Azure Event Hubs. This sink works with Serilog Version &gt;2.8.0</Description>
+    <PackageDescription>Serilog event sink that writes to Kafka endpoints, using Confluent.Kafka, including Azure Event Hubs. This sink works with Serilog Version &gt;2.8.0</PackageDescription>
     <RepositoryUrl>https://github.com/jonhoare/serilog-sinks-kafka</RepositoryUrl>
     <PackageIconUrl>http://serilog.net/images/serilog-sink-nuget.png</PackageIconUrl>
     <Tags>seilog logging azure kafka</Tags>
