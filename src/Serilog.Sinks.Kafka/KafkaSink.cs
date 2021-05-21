@@ -1,5 +1,6 @@
 ﻿using Confluent.Kafka;
 using Serilog.Configuration;
+using Serilog.Core;
 using Serilog.Events;
 using Serilog.Formatting;
 using Serilog.Sinks.PeriodicBatching;
@@ -32,7 +33,7 @@ namespace Serilog.Sinks.Kafka
             string sslCaLocation,
             ITextFormatter formatter = null) : base(batchSizeLimit, TimeSpan.FromSeconds(period))
         {
-            ConfigureKafkaConnection(bootstrapServers, securityProtocol, saslMechanism, saslUsername, 
+            ConfigureKafkaConnection(bootstrapServers, securityProtocol, saslMechanism, saslUsername,
                 saslPassword, sslCaLocation);
 
             this.formatter = formatter ?? new Formatting.Json.JsonFormatter(renderMessage: true);
@@ -125,8 +126,10 @@ namespace Serilog.Sinks.Kafka
             string topic = "logs",
             string saslUsername = null,
             string saslPassword = null,
-            string sslCaLocation = null, 
-            ITextFormatter formatter = null)
+            string sslCaLocation = null,
+            ITextFormatter formatter = null,
+            LogEventLevel restrictedToMinLevel = LogEventLevel.Verbose,
+            LoggingLevelSwitch levelSwitch = null)
         {
             var sink = new KafkaSink(
                 bootstrapServers,
@@ -137,10 +140,10 @@ namespace Serilog.Sinks.Kafka
                 topic,
                 saslUsername,
                 saslPassword,
-                sslCaLocation, 
+                sslCaLocation,
                 formatter);
 
-            return loggerConfiguration.Sink(sink);
+            return loggerConfiguration.Sink(sink, restrictedToMinLevel, levelSwitch);
         }
 
         public static LoggerConfiguration Kafka(
@@ -154,7 +157,9 @@ namespace Serilog.Sinks.Kafka
             string saslUsername = null,
             string saslPassword = null,
             string sslCaLocation = null,
-            ITextFormatter formatter = null)
+            ITextFormatter formatter = null,
+            LogEventLevel restrictedToMinLevel = LogEventLevel.Verbose,
+            LoggingLevelSwitch levelSwitch = null)
         {
             var sink = new KafkaSink(
                 bootstrapServers,
@@ -168,7 +173,7 @@ namespace Serilog.Sinks.Kafka
                 sslCaLocation,
                 formatter);
 
-            return loggerConfiguration.Sink(sink);
+            return loggerConfiguration.Sink(sink, restrictedToMinLevel, levelSwitch);
         }
     }
 }
