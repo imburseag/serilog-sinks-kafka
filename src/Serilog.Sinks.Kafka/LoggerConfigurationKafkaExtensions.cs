@@ -1,9 +1,9 @@
-﻿using System;
-using Confluent.Kafka;
+﻿using Confluent.Kafka;
 using Serilog.Configuration;
 using Serilog.Core;
 using Serilog.Events;
 using Serilog.Formatting;
+using System;
 
 namespace Serilog.Sinks.Kafka
 {
@@ -74,6 +74,16 @@ namespace Serilog.Sinks.Kafka
                 saslPassword,
                 sslCaLocation,
                 formatter);
+
+            return loggerConfiguration.Sink(sink, restrictedToMinLevel, levelSwitch);
+        }
+
+        public static LoggerConfiguration Kafka(
+            this LoggerSinkConfiguration loggerConfiguration,
+           KafkaSinkOptions options, LogEventLevel restrictedToMinLevel = LogEventLevel.Verbose,
+            LoggingLevelSwitch levelSwitch = null)
+        {
+            var sink = new KafkaSink(options);
 
             return loggerConfiguration.Sink(sink, restrictedToMinLevel, levelSwitch);
         }

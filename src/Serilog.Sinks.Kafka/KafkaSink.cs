@@ -1,4 +1,5 @@
 ﻿using Confluent.Kafka;
+using Serilog.Debugging;
 using Serilog.Events;
 using Serilog.Formatting;
 using Serilog.Sinks.PeriodicBatching;
@@ -18,6 +19,7 @@ namespace Serilog.Sinks.Kafka
         private IProducer<Null, byte[]> producer;
         private ITextFormatter formatter;
         private readonly Func<LogEvent, string> _topicDecider;
+        private KafkaSinkOptions _options;
 
         public KafkaSink(
             string bootstrapServers,
@@ -57,6 +59,22 @@ namespace Serilog.Sinks.Kafka
             this.formatter = formatter ?? new Formatting.Json.JsonFormatter(renderMessage: true);
 
             this._topicDecider = topicDecider;
+        }
+
+        public KafkaSink(KafkaSinkOptions options)
+            : base(options.BatchSizeLimit, TimeSpan.FromSeconds(options.Period))
+        {
+            _options = options;
+
+            ConfigureKafkaConnection(options.BootstrapServers,
+                options.SecurityProtocol,
+                options.SaslMechanism,
+                options.SaslUsername,
+                 options.SaslPassword,
+                options.SslCaLocation);
+
+            formatter = formatter ?? new Formatting.Json.JsonFormatter(renderMessage: true);
+            _topicDecider = options.TopicDecider;
         }
 
         protected override async Task EmitBatchAsync(IEnumerable<LogEvent> events)
@@ -100,6 +118,54 @@ namespace Serilog.Sinks.Kafka
 
             producer = new ProducerBuilder<Null, byte[]>(config)
                 .Build();
+        }
+
+        /// <summary>
+        /// Handles the exceptions.
+        /// </summary>
+        /// <param name="ex"></param>
+        /// <param name="events"></param>
+        protected virtual void HandleException(Exception ex, IEnumerable<LogEvent> events)
+        {
+            if (_options.EmitEventFailure.HasFlag(EmitEventFailureHandling.WriteToSelfLog))
+            {
+                SelfLog.WriteLine("Caught exception while preforming bulk operation to Kafka: {0}", ex);
+            }
+            if (_options.EmitEventFailure.HasFlag(EmitEventFailureHandling.WriteToFailureSink) &&
+                _options.FailureSink != null)
+            {
+                try
+                {
+                    foreach (var e in events)
+                    {
+                        _options.FailureSink.Emit(e);
+                    }
+                }
+                catch (Exception exSink)
+                {
+                    // We do not let this fail too
+                    SelfLog.WriteLine("Caught exception while emitting to sink {1}: {0}", exSink,
+                        _options.FailureSink);
+                }
+            }
+            if (_options.EmitEventFailure.HasFlag(EmitEventFailureHandling.RaiseCallback) &&
+                       _options.FailureCallback != null)
+            {
+                try
+                {
+                    foreach (var e in events)
+                    {
+                        _options.FailureCallback(e);
+                    }
+                }
+                catch (Exception exCallback)
+                {
+                    SelfLog.WriteLine("Caught exception while emitting to callback {1}: {0}", exCallback,
+                        _options.FailureCallback);
+                }
+            }
+            if (_options.EmitEventFailure.HasFlag(EmitEventFailureHandling.ThrowException))
+                throw ex;
         }
     }
 }
