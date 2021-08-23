@@ -8,15 +8,15 @@ namespace Serilog.Sinks.Kafka
 {
     public class KafkaSinkOptions
     {
-        public string BootstrapServers { get; set; }
-        public int BatchSizeLimit { get; set; }
-        public int Period { get; set; }
-        public SecurityProtocol SecurityProtocol { get; set; }
-        public SaslMechanism SaslMechanism { get; set; }
-        public string Topic { get; set; }
-        public string SaslUsername { get; set; }
-        public string SaslPassword { get; set; }
-        public string SslCaLocation { get; set; }
+        public string BootstrapServers { get; set; } = "localhost:9092";
+        public int BatchSizeLimit { get; set; } = 50;
+        public int Period { get; set; } = 5;
+        public SecurityProtocol SecurityProtocol { get; set; } = SecurityProtocol.Plaintext;
+        public SaslMechanism SaslMechanism { get; set; } = SaslMechanism.Plain;
+        public string Topic { get; set; } = "logs";
+        public string SaslUsername { get; set; } = null;
+        public string SaslPassword { get; set; } = null;
+        public string SslCaLocation { get; set; } = null;
         public ITextFormatter Formatter { get; set; } = null;
         public Func<LogEvent, string> TopicDecider { get; set; } = null;
 
