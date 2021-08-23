@@ -18,7 +18,7 @@ namespace Serilog.Sinks.Kafka
         private TopicPartition topic;
         private IProducer<Null, byte[]> producer;
         private ITextFormatter formatter;
-        private readonly Func<LogEvent, string> _topicDecider;
+        private readonly Func<LogEvent, string> topicDecider;
         private KafkaSinkOptions _options;
 
         public KafkaSink(
@@ -58,7 +58,7 @@ namespace Serilog.Sinks.Kafka
 
             this.formatter = formatter ?? new Formatting.Json.JsonFormatter(renderMessage: true);
 
-            this._topicDecider = topicDecider;
+            this.topicDecider = topicDecider;
         }
 
         public KafkaSink(KafkaSinkOptions options)
@@ -73,8 +73,9 @@ namespace Serilog.Sinks.Kafka
                  options.SaslPassword,
                 options.SslCaLocation);
 
-            formatter = formatter ?? new Formatting.Json.JsonFormatter(renderMessage: true);
-            _topicDecider = options.TopicDecider;
+            formatter = options.Formatter ?? new Formatting.Json.JsonFormatter(renderMessage: true);
+            topicDecider = options.TopicDecider;
+            topic = new TopicPartition(options.Topic, Partition.Any);
         }
 
         protected override async Task EmitBatchAsync(IEnumerable<LogEvent> events)
@@ -88,11 +89,11 @@ namespace Serilog.Sinks.Kafka
                     formatter.Format(logEvent, render);
                     var message = new Message<Null, byte[]> { Value = Encoding.UTF8.GetBytes(render.ToString()) };
 
-                    var kakfaTopicPartition = _topicDecider != null
-                        ? new TopicPartition(_topicDecider(logEvent), Partition.Any)
+                    var kafkaTopicPartition = topicDecider != null
+                        ? new TopicPartition(topicDecider(logEvent), Partition.Any)
                         : topic;
 
-                    tasks.Add(producer.ProduceAsync(kakfaTopicPartition, message));
+                    tasks.Add(producer.ProduceAsync(kafkaTopicPartition, message));
                 }
             }
 
