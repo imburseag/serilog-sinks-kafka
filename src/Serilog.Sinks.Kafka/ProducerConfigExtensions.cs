@@ -6,7 +6,7 @@ using System.Linq;
 
 namespace Serilog.Sinks.Kafka
 {
-    public static class ExtensionMethods
+    public static class ProducerConfigExtensions
     {
         private const string SerilogEnvVar = "SERILOG__KAFKA__";
 
@@ -40,7 +40,7 @@ namespace Serilog.Sinks.Kafka
             return config;
         }
 
-        public static void SetValues(object obj, string propertyName, string stringValue)
+        private static void SetValues(object obj, string propertyName, string stringValue)
         {
             if (string.IsNullOrEmpty(stringValue))
                 return;
