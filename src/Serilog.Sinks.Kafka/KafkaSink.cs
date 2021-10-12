@@ -1,89 +1,91 @@
-﻿using Confluent.Kafka;
-using Serilog.Configuration;
-using Serilog.Events;
-using Serilog.Formatting;
-using Serilog.Sinks.PeriodicBatching;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using Confluent.Kafka;
+using Serilog.Events;
+using Serilog.Formatting;
+using Serilog.Sinks.PeriodicBatching;
 
 namespace Serilog.Sinks.Kafka
 {
-    public class KafkaSink : PeriodicBatchingSink
+    public class KafkaSink : IBatchedLogEventSink
     {
-        private TopicPartition topic;
-        private IProducer<Null, byte[]> producer;
-        private ITextFormatter formatter;
+        private const int FlushTimeoutSecs = 10;
+
+        private readonly TopicPartition _globalTopicPartition;
+        private readonly ITextFormatter _formatter;
         private readonly Func<LogEvent, string> _topicDecider;
+        private IProducer<Null, byte[]> _producer;
 
         public KafkaSink(
             string bootstrapServers,
-            int batchSizeLimit,
-            int period,
             SecurityProtocol securityProtocol,
             SaslMechanism saslMechanism,
-            string topic,
             string saslUsername,
             string saslPassword,
             string sslCaLocation,
-            ITextFormatter formatter = null) : base(batchSizeLimit, TimeSpan.FromSeconds(period))
+            string topic = null,
+            Func<LogEvent, string> topicDecider = null,
+            ITextFormatter formatter = null)
         {
-            ConfigureKafkaConnection(bootstrapServers, securityProtocol, saslMechanism, saslUsername, 
-                saslPassword, sslCaLocation);
+            ConfigureKafkaConnection(
+                bootstrapServers,
+                securityProtocol,
+                saslMechanism,
+                saslUsername,
+                saslPassword,
+                sslCaLocation);
 
-            this.formatter = formatter ?? new Formatting.Json.JsonFormatter(renderMessage: true);
+            _formatter = formatter ?? new Formatting.Json.JsonFormatter(renderMessage: true);
 
-            this.topic = new TopicPartition(topic, Partition.Any);
+            if (topic != null)
+                _globalTopicPartition = new TopicPartition(topic, Partition.Any);
+
+            if (topicDecider != null)
+                _topicDecider = topicDecider;
         }
 
-        public KafkaSink(
-            string bootstrapServers,
-            int batchSizeLimit,
-            int period,
-            SecurityProtocol securityProtocol,
-            SaslMechanism saslMechanism,
-            Func<LogEvent, string> topicDecider,
-            string saslUsername,
-            string saslPassword,
-            string sslCaLocation,
-            ITextFormatter formatter = null) : base(batchSizeLimit, TimeSpan.FromSeconds(period))
+        public Task OnEmptyBatchAsync() => Task.CompletedTask;
+
+        public Task EmitBatchAsync(IEnumerable<LogEvent> batch)
         {
-            ConfigureKafkaConnection(bootstrapServers, securityProtocol, saslMechanism, saslUsername,
-                saslPassword, sslCaLocation);
-
-            this.formatter = formatter ?? new Formatting.Json.JsonFormatter(renderMessage: true);
-
-            this._topicDecider = topicDecider;
-        }
-
-        protected override async Task EmitBatchAsync(IEnumerable<LogEvent> events)
-        {
-            var tasks = new List<Task>();
-
-            foreach (var logEvent in events)
+            foreach (var logEvent in batch)
             {
+                Message<Null, byte[]> message;
+
+                var topicPartition = _topicDecider == null
+                    ? _globalTopicPartition
+                    : new TopicPartition(_topicDecider(logEvent), Partition.Any);
+
                 using (var render = new StringWriter(CultureInfo.InvariantCulture))
                 {
-                    formatter.Format(logEvent, render);
-                    var message = new Message<Null, byte[]> { Value = Encoding.UTF8.GetBytes(render.ToString()) };
+                    _formatter.Format(logEvent, render);
 
-                    var kakfaTopicPartition = _topicDecider != null
-                        ? new TopicPartition(_topicDecider(logEvent), Partition.Any)
-                        : topic;
-
-                    tasks.Add(producer.ProduceAsync(kakfaTopicPartition, message));
+                    message = new Message<Null, byte[]>
+                    {
+                        Value = Encoding.UTF8.GetBytes(render.ToString())
+                    };
                 }
+
+                _producer.Produce(topicPartition, message);
             }
 
-            await Task.WhenAll(tasks);
+            _producer.Flush(TimeSpan.FromSeconds(FlushTimeoutSecs));
+
+            return Task.CompletedTask;
         }
 
-        private void ConfigureKafkaConnection(string bootstrapServers, SecurityProtocol securityProtocol,
-            SaslMechanism saslMechanism, string saslUsername, string saslPassword, string sslCaLocation)
+        private void ConfigureKafkaConnection(
+            string bootstrapServers,
+            SecurityProtocol securityProtocol,
+            SaslMechanism saslMechanism,
+            string saslUsername, 
+            string saslPassword, 
+            string sslCaLocation)
         {
             var config = new ProducerConfig()
                 .SetValue("ApiVersionFallbackMs", 0)
@@ -99,76 +101,8 @@ namespace Serilog.Sinks.Kafka
                 .SetValue("SaslUsername", saslUsername)
                 .SetValue("SaslPassword", saslPassword);
 
-            producer = new ProducerBuilder<Null, byte[]>(config)
+            _producer = new ProducerBuilder<Null, byte[]>(config)
                 .Build();
-        }
-    }
-
-    public static class LoggerConfigurationKafkaExtensions
-    {
-        /// <summary>
-        /// Adds a sink that writes log events to a Kafka topic in the broker endpoints.
-        /// </summary>
-        /// <param name="loggerConfiguration">The logger configuration.</param>
-        /// <param name="batchSizeLimit">The maximum number of events to include in a single batch.</param>
-        /// <param name="period">The time in seconds to wait between checking for event batches.</param>
-        /// <param name="bootstrapServers">The list of bootstrapServers separated by comma.</param>
-        /// <param name="topic">The topic name.</param>
-        /// <returns></returns>
-        public static LoggerConfiguration Kafka(
-            this LoggerSinkConfiguration loggerConfiguration,
-            string bootstrapServers = "localhost:9092",
-            int batchSizeLimit = 50,
-            int period = 5,
-            SecurityProtocol securityProtocol = SecurityProtocol.Plaintext,
-            SaslMechanism saslMechanism = SaslMechanism.Plain,
-            string topic = "logs",
-            string saslUsername = null,
-            string saslPassword = null,
-            string sslCaLocation = null, 
-            ITextFormatter formatter = null)
-        {
-            var sink = new KafkaSink(
-                bootstrapServers,
-                batchSizeLimit,
-                period,
-                securityProtocol,
-                saslMechanism,
-                topic,
-                saslUsername,
-                saslPassword,
-                sslCaLocation, 
-                formatter);
-
-            return loggerConfiguration.Sink(sink);
-        }
-
-        public static LoggerConfiguration Kafka(
-            this LoggerSinkConfiguration loggerConfiguration,
-            Func<LogEvent, string> topicDecider,
-            string bootstrapServers = "localhost:9092",
-            int batchSizeLimit = 50,
-            int period = 5,
-            SecurityProtocol securityProtocol = SecurityProtocol.Plaintext,
-            SaslMechanism saslMechanism = SaslMechanism.Plain,
-            string saslUsername = null,
-            string saslPassword = null,
-            string sslCaLocation = null,
-            ITextFormatter formatter = null)
-        {
-            var sink = new KafkaSink(
-                bootstrapServers,
-                batchSizeLimit,
-                period,
-                securityProtocol,
-                saslMechanism,
-                topicDecider,
-                saslUsername,
-                saslPassword,
-                sslCaLocation,
-                formatter);
-
-            return loggerConfiguration.Sink(sink);
         }
     }
 }
