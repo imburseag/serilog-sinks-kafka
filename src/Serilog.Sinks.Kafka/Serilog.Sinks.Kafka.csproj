@@ -10,6 +10,7 @@
     <PackageDescription>Serilog event sink that writes to Kafka endpoints, using Confluent.Kafka, including Azure Event Hubs. This sink works with Serilog Version >2.8.0</PackageDescription>
     <RepositoryUrl>https://github.com/imburseag/serilog-sinks-kafka</RepositoryUrl>
     <PackageIconUrl>http://serilog.net/images/serilog-sink-nuget.png</PackageIconUrl>
+    <PackageProjectUrl>https://github.com/imburseag/serilog-sinks-kafka</PackageProjectUrl>
     <Tags>seilog logging azure kafka</Tags>
   </PropertyGroup>
 
