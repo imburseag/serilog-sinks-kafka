@@ -24,7 +24,7 @@ namespace Serilog.Sinks.Kafka
         public KafkaSink(
             string bootstrapServers,
             SecurityProtocol securityProtocol,
-            SaslMechanism saslMechanism,
+            SaslMechanism? saslMechanism,
             string saslUsername,
             string saslPassword,
             string sslCaLocation,
@@ -82,9 +82,9 @@ namespace Serilog.Sinks.Kafka
         private void ConfigureKafkaConnection(
             string bootstrapServers,
             SecurityProtocol securityProtocol,
-            SaslMechanism saslMechanism,
-            string saslUsername, 
-            string saslPassword, 
+            SaslMechanism? saslMechanism,
+            string saslUsername,
+            string saslPassword,
             string sslCaLocation)
         {
             var config = new ProducerConfig()
@@ -93,13 +93,17 @@ namespace Serilog.Sinks.Kafka
                 .LoadFromEnvironmentVariables()
                 .SetValue("BootstrapServers", bootstrapServers)
                 .SetValue("SecurityProtocol", securityProtocol)
-                .SetValue("SaslMechanism", saslMechanism)
                 .SetValue("SslCaLocation",
                     string.IsNullOrEmpty(sslCaLocation)
                         ? null
                         : Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), sslCaLocation))
                 .SetValue("SaslUsername", saslUsername)
                 .SetValue("SaslPassword", saslPassword);
+
+            if (saslMechanism.HasValue)
+            {
+                config.SetValue("SaslMechanism", saslMechanism);
+            }
 
             _producer = new ProducerBuilder<Null, byte[]>(config)
                 .Build();
