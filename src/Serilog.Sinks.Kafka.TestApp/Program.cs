@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
 using System;
 using System.IO;
+using System.Threading;
 
 namespace Serilog.Sinks.Kafka.TestApp
 {
@@ -27,7 +28,11 @@ namespace Serilog.Sinks.Kafka.TestApp
                 .ReadFrom.Configuration(config)
                 .CreateLogger();
 
-            Log.Information("Console Application Test!");
+            while (true)
+            {
+                Thread.Sleep(1000);
+                Log.Information("Console Application Test!");
+            }
 
             Log.CloseAndFlush();
         }

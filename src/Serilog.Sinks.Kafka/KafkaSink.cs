@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using Confluent.Kafka;
+using Serilog.Context;
 using Serilog.Events;
 using Serilog.Formatting;
 using Serilog.Sinks.PeriodicBatching;
@@ -22,6 +23,8 @@ namespace Serilog.Sinks.Kafka
         private IProducer<Null, byte[]> _producer;
         Action<IProducer<Null, byte[]>, Error> _errorHandler;
 
+        const string SKIP_KEY = "skip-kafka";
+
         public KafkaSink(
             string bootstrapServers,
             SecurityProtocol securityProtocol,
@@ -34,14 +37,6 @@ namespace Serilog.Sinks.Kafka
             ITextFormatter formatter = null,
             Action<IProducer<Null, byte[]>, Error> errorHandler = null)
         {
-            ConfigureKafkaConnection(
-                bootstrapServers,
-                securityProtocol,
-                saslMechanism,
-                saslUsername,
-                saslPassword,
-                sslCaLocation);
-
             _formatter = formatter ?? new Formatting.Json.JsonFormatter(renderMessage: true);
 
             if (topic != null)
@@ -56,9 +51,17 @@ namespace Serilog.Sinks.Kafka
             {
                 _errorHandler = (pro, msg) =>
                 {
-                    Log.Error($"{msg.Reason}");
+                    Log.ForContext(SKIP_KEY, string.Empty).Error($"[KafkaError] {pro.Name} {msg.Code} {msg.Reason}");
                 };
             }
+
+            ConfigureKafkaConnection(
+                bootstrapServers,
+                securityProtocol,
+                saslMechanism,
+                saslUsername,
+                saslPassword,
+                sslCaLocation);
         }
 
         public Task OnEmptyBatchAsync() => Task.CompletedTask;
@@ -67,6 +70,9 @@ namespace Serilog.Sinks.Kafka
         {
             foreach (var logEvent in batch)
             {
+                if (logEvent.Properties.TryGetValue(SKIP_KEY, out LogEventPropertyValue logEventPropertyValue))
+                    continue;
+
                 Message<Null, byte[]> message;
 
                 var topicPartition = _topicDecider == null
