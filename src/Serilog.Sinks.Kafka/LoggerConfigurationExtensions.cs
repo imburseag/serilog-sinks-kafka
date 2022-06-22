@@ -16,6 +16,7 @@ namespace Serilog.Sinks.Kafka
         /// <param name="batchSizeLimit">The maximum number of events to include in a single batch.</param>
         /// <param name="period">The time in seconds to wait between checking for event batches.</param>
         /// <param name="bootstrapServers">The list of bootstrapServers separated by comma.</param>
+        /// <param name="errorHandler">kafka errorHandler</param>
         /// <param name="topic">The topic name.</param>
         /// <returns></returns>
         public static LoggerConfiguration Kafka(
@@ -29,6 +30,7 @@ namespace Serilog.Sinks.Kafka
             string saslUsername = null,
             string saslPassword = null,
             string sslCaLocation = null,
+            Action<IProducer<Null, byte[]>, Error> errorHandler = null,
             ITextFormatter formatter = null)
         {
             return loggerConfiguration.Kafka(
@@ -42,6 +44,7 @@ namespace Serilog.Sinks.Kafka
                 sslCaLocation,
                 topic,
                 topicDecider: null,
+                errorHandler,
                 formatter);
         }
 
@@ -56,6 +59,7 @@ namespace Serilog.Sinks.Kafka
             string saslUsername = null,
             string saslPassword = null,
             string sslCaLocation = null,
+            Action<IProducer<Null, byte[]>, Error> errorHandler = null,
             ITextFormatter formatter = null)
         {
             return loggerConfiguration.Kafka(
@@ -69,6 +73,7 @@ namespace Serilog.Sinks.Kafka
                 sslCaLocation,
                 topic: null,
                 topicDecider,
+                errorHandler,
                 formatter);
         }
 
@@ -84,6 +89,7 @@ namespace Serilog.Sinks.Kafka
             string sslCaLocation,
             string topic,
             Func<LogEvent, string> topicDecider,
+            Action<IProducer<Null, byte[]>, Error> errorHandler,
             ITextFormatter formatter)
         {
             var kafkaSink = new KafkaSink(
@@ -95,7 +101,7 @@ namespace Serilog.Sinks.Kafka
                 sslCaLocation,
                 topic,
                 topicDecider,
-                formatter);
+                formatter, errorHandler);
 
             var batchingOptions = new PeriodicBatchingSinkOptions
             {

@@ -20,6 +20,7 @@ namespace Serilog.Sinks.Kafka
         private readonly ITextFormatter _formatter;
         private readonly Func<LogEvent, string> _topicDecider;
         private IProducer<Null, byte[]> _producer;
+        Action<IProducer<Null, byte[]>, Error> _errorHandler;
 
         public KafkaSink(
             string bootstrapServers,
@@ -30,7 +31,8 @@ namespace Serilog.Sinks.Kafka
             string sslCaLocation,
             string topic = null,
             Func<LogEvent, string> topicDecider = null,
-            ITextFormatter formatter = null)
+            ITextFormatter formatter = null,
+            Action<IProducer<Null, byte[]>, Error> errorHandler = null)
         {
             ConfigureKafkaConnection(
                 bootstrapServers,
@@ -47,6 +49,16 @@ namespace Serilog.Sinks.Kafka
 
             if (topicDecider != null)
                 _topicDecider = topicDecider;
+
+            if (_errorHandler != null)
+                _errorHandler = errorHandler;
+            else
+            {
+                _errorHandler = (pro, msg) =>
+                {
+                    Log.Error($"{msg.Reason}");
+                };
+            }
         }
 
         public Task OnEmptyBatchAsync() => Task.CompletedTask;
@@ -105,11 +117,9 @@ namespace Serilog.Sinks.Kafka
                 config.SetValue("SaslMechanism", saslMechanism);
             }
 
-            _producer = new ProducerBuilder<Null, byte[]>(config).SetErrorHandler((pro, msg) =>
-            {
-                Log.Error($"{msg.Reason}");
-            })
-             .Build();
+            _producer = new ProducerBuilder<Null, byte[]>(config)
+                .SetErrorHandler(_errorHandler)
+                .Build();
         }
     }
 }
