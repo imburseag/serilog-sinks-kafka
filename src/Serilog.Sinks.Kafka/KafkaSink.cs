@@ -125,6 +125,13 @@ namespace Serilog.Sinks.Kafka
 
             _producer = new ProducerBuilder<Null, byte[]>(config)
                 .SetErrorHandler(_errorHandler)
+                .SetLogHandler((pro, msg) =>
+                {
+                    if (msg.Level <= SyslogLevel.Error)
+                        Log.ForContext(SKIP_KEY, string.Empty).Error($"[Kafka] {msg.Level} {msg.Message}");
+                    else
+                        Log.ForContext(SKIP_KEY, string.Empty).Information($"[Kafka] {msg.Level} {msg.Message}");
+                })
                 .Build();
         }
     }
