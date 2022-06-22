@@ -105,8 +105,11 @@ namespace Serilog.Sinks.Kafka
                 config.SetValue("SaslMechanism", saslMechanism);
             }
 
-            _producer = new ProducerBuilder<Null, byte[]>(config)
-                .Build();
+            _producer = new ProducerBuilder<Null, byte[]>(config).SetErrorHandler((pro, msg) =>
+            {
+                Log.Error($"{msg.Reason}");
+            })
+             .Build();
         }
     }
 }
