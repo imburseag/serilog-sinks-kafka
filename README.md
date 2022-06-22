@@ -1,7 +1,7 @@
 # serilog-sinks-kafka
 
-[![CircleCI](https://circleci.com/gh/imburseag/serilog-sinks-kafka/tree/master.svg?style=svg)](https://circleci.com/gh/imburseag/serilog-sinks-kafka/tree/master) [![Nuget](https://img.shields.io/nuget/v/serilog.sinks.confluent.kafka)](https://www.nuget.org/packages/Serilog.Sinks.Confluent.Kafka/) [![NuGet Downloads](https://img.shields.io/nuget/dt/serilog.sinks.confluent.kafka.svg)](https://www.nuget.org/packages/Serilog.Sinks.Confluent.Kafka/)
-
+[![Nuget](https://img.shields.io/nuget/v/Serilog.Sinks.ConfluentKafka)](https://www.nuget.org/packages/Serilog.Sinks.ConfluentKafka/) [![NuGet Downloads](https://img.shields.io/nuget/dt/Serilog.Sinks.ConfluentKafka.svg)](https://www.nuget.org/packages/Serilog.Sinks.ConfluentKafka/)
+ 
 A Serilog sink that writes events to Kafka Endpoints (Including Azure Event Hubs).
 
 ## Dependencies
