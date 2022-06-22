@@ -1,19 +1,34 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
 	<PropertyGroup>
 		<Version>0.0.1</Version>
+		<PackageId>Serilog.Sinks.ConfluentKafka</PackageId>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<TargetFramework>netstandard2.0</TargetFramework>
 		<IsPackable>true</IsPackable>
 		<PackageId>Serilog.Sinks.Confluent.Kafka</PackageId>
 		<Title>Serilog.Sinks.Confluent.Kafka</Title>
-		<Authors>Imburse AG</Authors>
-		<Description>Serilog event sink that writes to Kafka endpoints, using Confluent.Kafka, including Azure Event Hubs. This sink works with Serilog Version >2.8.0</Description>
-		<PackageDescription>Serilog event sink that writes to Kafka endpoints, using Confluent.Kafka, including Azure Event Hubs. This sink works with Serilog Version >2.8.0</PackageDescription>
+		<Authors>Gui.H</Authors>
+		<Description>Serilog event sink that writes to Kafka endpoints, using Confluent.Kafka, including Azure Event Hubs. This sink works with Serilog Version &gt;2.8.0</Description>
+		<PackageDescription>Serilog event sink that writes to Kafka endpoints, using Confluent.Kafka, including Azure Event Hubs. This sink works with Serilog Version &gt;2.8.0</PackageDescription>
 		<RepositoryUrl>https://github.com/imburseag/serilog-sinks-kafka</RepositoryUrl>
 		<PackageIconUrl>http://serilog.net/images/serilog-sink-nuget.png</PackageIconUrl>
 		<Tags>seilog logging azure kafka</Tags>
+		<PackageProjectUrl>https://github.com/SpringHgui/serilog-sinks-kafka/</PackageProjectUrl>
+		<PackageIcon>sink.png</PackageIcon>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<PackageTags>serilog;kafka;sinks</PackageTags>
 	</PropertyGroup>
+
+	<ItemGroup>
+		<None Include="..\..\README.md">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+		<None Include="..\..\sink.png">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+	</ItemGroup>
 
 	<ItemGroup>
 		<PackageReference Include="Confluent.Kafka" Version="1.6.3" />
