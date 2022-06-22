@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
@@ -22,20 +23,15 @@ namespace Serilog.Sinks.Kafka
         private readonly Func<LogEvent, string> _topicDecider;
         private IProducer<Null, byte[]> _producer;
         Action<IProducer<Null, byte[]>, Error> _errorHandler;
+        ProducerConfig _producerConfig;
 
         const string SKIP_KEY = "skip-kafka";
 
         public KafkaSink(
-            string bootstrapServers,
-            SecurityProtocol securityProtocol,
-            SaslMechanism? saslMechanism,
-            string saslUsername,
-            string saslPassword,
-            string sslCaLocation,
+            ProducerConfig producerConfig,
             string topic = null,
             Func<LogEvent, string> topicDecider = null,
-            ITextFormatter formatter = null,
-            Action<IProducer<Null, byte[]>, Error> errorHandler = null)
+             ITextFormatter formatter = null, Action<IProducer<Null, byte[]>, Error> errorHandler = null)
         {
             _formatter = formatter ?? new Formatting.Json.JsonFormatter(renderMessage: true);
 
@@ -55,77 +51,54 @@ namespace Serilog.Sinks.Kafka
                 };
             }
 
-            ConfigureKafkaConnection(
-                bootstrapServers,
-                securityProtocol,
-                saslMechanism,
-                saslUsername,
-                saslPassword,
-                sslCaLocation);
+            this._producerConfig = producerConfig;
+            ConfigureKafkaConnection();
         }
 
         public Task OnEmptyBatchAsync() => Task.CompletedTask;
 
         public Task EmitBatchAsync(IEnumerable<LogEvent> batch)
         {
-            foreach (var logEvent in batch)
+            try
             {
-                if (logEvent.Properties.ContainsKey(SKIP_KEY))
-                    continue;
-
-                Message<Null, byte[]> message;
-
-                var topicPartition = _topicDecider == null
-                    ? _globalTopicPartition
-                    : new TopicPartition(_topicDecider(logEvent), Partition.Any);
-
-                using (var render = new StringWriter(CultureInfo.InvariantCulture))
+                foreach (var logEvent in batch)
                 {
-                    _formatter.Format(logEvent, render);
+                    if (logEvent.Properties.ContainsKey(SKIP_KEY))
+                        continue;
 
-                    message = new Message<Null, byte[]>
+                    Message<Null, byte[]> message;
+
+                    var topicPartition = _topicDecider == null
+                        ? _globalTopicPartition
+                        : new TopicPartition(_topicDecider(logEvent), Partition.Any);
+
+                    using (var render = new StringWriter(CultureInfo.InvariantCulture))
                     {
-                        Value = Encoding.UTF8.GetBytes(render.ToString())
-                    };
+                        _formatter.Format(logEvent, render);
+
+                        message = new Message<Null, byte[]>
+                        {
+                            Value = Encoding.UTF8.GetBytes(render.ToString())
+                        };
+                    }
+
+                    _producer.Produce(topicPartition, message);
                 }
 
-                _producer.Produce(topicPartition, message);
+                _producer.Flush(TimeSpan.FromSeconds(FlushTimeoutSecs));
             }
-
-            _producer.Flush(TimeSpan.FromSeconds(FlushTimeoutSecs));
+            catch (Exception ex)
+            {
+                Log.ForContext(SKIP_KEY, string.Empty).Error(ex, "[EmitBatchAsync Error]");
+                Log.ForContext(SKIP_KEY, string.Empty).Information($"[Kafka][batchInfo] {batch.First().RenderMessage()} ~ {batch.Last().RenderMessage()}");
+            }
 
             return Task.CompletedTask;
         }
 
-        private void ConfigureKafkaConnection(
-            string bootstrapServers,
-            SecurityProtocol securityProtocol,
-            SaslMechanism? saslMechanism,
-            string saslUsername,
-            string saslPassword,
-            string sslCaLocation)
+        private void ConfigureKafkaConnection()
         {
-            var config = new ProducerConfig()
-                .SetValue("BatchSize", 800000)
-                .SetValue("ApiVersionFallbackMs", 0)
-                .SetValue("EnableDeliveryReports", false)
-                .LoadFromEnvironmentVariables()
-                .SetValue("BootstrapServers", bootstrapServers)
-                .SetValue("SecurityProtocol", securityProtocol)
-                .SetValue("EnableDeliveryReports", true)
-                .SetValue("SslCaLocation",
-                    string.IsNullOrEmpty(sslCaLocation)
-                        ? null
-                        : Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), sslCaLocation))
-                .SetValue("SaslUsername", saslUsername)
-                .SetValue("SaslPassword", saslPassword);
-
-            if (saslMechanism.HasValue)
-            {
-                config.SetValue("SaslMechanism", saslMechanism);
-            }
-
-            _producer = new ProducerBuilder<Null, byte[]>(config)
+            _producer = new ProducerBuilder<Null, byte[]>(_producerConfig)
                 .SetErrorHandler(_errorHandler)
                 .SetLogHandler((pro, msg) =>
                 {

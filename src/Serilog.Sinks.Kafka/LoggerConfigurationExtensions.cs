@@ -48,6 +48,16 @@ namespace Serilog.Sinks.Kafka
                 formatter);
         }
 
+        /// <summary>
+        /// Adds a sink that writes log events to a Kafka topic in the broker endpoints.
+        /// </summary>
+        /// <param name="loggerConfiguration">The logger configuration.</param>
+        /// <param name="batchSizeLimit">The maximum number of events to include in a single batch.</param>
+        /// <param name="period">The time in seconds to wait between checking for event batches.</param>
+        /// <param name="bootstrapServers">The list of bootstrapServers separated by comma.</param>
+        /// <param name="errorHandler">kafka errorHandler</param>
+        /// <param name="topic">The topic name.</param>
+        /// <returns></returns>
         public static LoggerConfiguration Kafka(
             this LoggerSinkConfiguration loggerConfiguration,
             Func<LogEvent, string> topicDecider,
@@ -77,6 +87,19 @@ namespace Serilog.Sinks.Kafka
                 formatter);
         }
 
+        public static LoggerConfiguration Kafka(
+            this LoggerSinkConfiguration loggerConfiguration,
+            string topic,
+            Func<LogEvent, string> topicDecider,
+            ProducerConfig producerConfig,
+            int batchSizeLimit = 50,
+            int period = 5,
+            Action<IProducer<Null, byte[]>, Error> errorHandler = null,
+            ITextFormatter formatter = null)
+        {
+            return loggerConfiguration.Kafka(producerConfig, topic, batchSizeLimit, period, topicDecider, errorHandler, formatter);
+        }
+
         private static LoggerConfiguration Kafka(
             this LoggerSinkConfiguration loggerConfiguration,
             string bootstrapServers,
@@ -92,13 +115,29 @@ namespace Serilog.Sinks.Kafka
             Action<IProducer<Null, byte[]>, Error> errorHandler,
             ITextFormatter formatter)
         {
+            return loggerConfiguration.Kafka(new ProducerConfig()
+            {
+                BootstrapServers = bootstrapServers,
+                SecurityProtocol = securityProtocol,
+                SaslMechanism = saslMechanism,
+                SaslUsername = saslUsername,
+                SaslPassword = saslPassword,
+                SslCaLocation = sslCaLocation
+            }, topic, batchSizeLimit, period, topicDecider, errorHandler, formatter);
+        }
+
+        private static LoggerConfiguration Kafka(
+           this LoggerSinkConfiguration loggerConfiguration,
+           ProducerConfig producerConfig,
+           string topic,
+           int batchSizeLimit,
+           int period,
+           Func<LogEvent, string> topicDecider,
+           Action<IProducer<Null, byte[]>, Error> errorHandler,
+           ITextFormatter formatter)
+        {
             var kafkaSink = new KafkaSink(
-                bootstrapServers,
-                securityProtocol,
-                saslMechanism,
-                saslUsername,
-                saslPassword,
-                sslCaLocation,
+                producerConfig,
                 topic,
                 topicDecider,
                 formatter, errorHandler);
