@@ -70,7 +70,7 @@ namespace Serilog.Sinks.Kafka
         {
             foreach (var logEvent in batch)
             {
-                if (logEvent.Properties.TryGetValue(SKIP_KEY, out LogEventPropertyValue logEventPropertyValue))
+                if (logEvent.Properties.ContainsKey(SKIP_KEY))
                     continue;
 
                 Message<Null, byte[]> message;
