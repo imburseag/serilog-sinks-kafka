@@ -106,11 +106,13 @@ namespace Serilog.Sinks.Kafka
             string sslCaLocation)
         {
             var config = new ProducerConfig()
+                .SetValue("BatchSize", 800000)
                 .SetValue("ApiVersionFallbackMs", 0)
                 .SetValue("EnableDeliveryReports", false)
                 .LoadFromEnvironmentVariables()
                 .SetValue("BootstrapServers", bootstrapServers)
                 .SetValue("SecurityProtocol", securityProtocol)
+                .SetValue("EnableDeliveryReports", true)
                 .SetValue("SslCaLocation",
                     string.IsNullOrEmpty(sslCaLocation)
                         ? null
