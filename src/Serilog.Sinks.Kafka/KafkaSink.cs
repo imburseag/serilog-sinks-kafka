@@ -21,7 +21,6 @@ namespace Serilog.Sinks.Kafka
         private readonly TopicPartition _globalTopicPartition;
         private readonly ITextFormatter _formatter;
         private readonly Func<LogEvent, string> _topicDecider;
-        private IProducer<Null, byte[]> _producer;
         Action<IProducer<Null, byte[]>, Error> _errorHandler;
         ProducerConfig _producerConfig;
 
@@ -61,6 +60,8 @@ namespace Serilog.Sinks.Kafka
         {
             try
             {
+                using var producer = ConfigureKafkaConnection();
+
                 foreach (var logEvent in batch)
                 {
                     if (logEvent.Properties.ContainsKey(SKIP_KEY))
@@ -82,10 +83,10 @@ namespace Serilog.Sinks.Kafka
                         };
                     }
 
-                    _producer.Produce(topicPartition, message);
+                    producer.Produce(topicPartition, message);
                 }
 
-                _producer.Flush(TimeSpan.FromSeconds(FlushTimeoutSecs));
+                producer.Flush(TimeSpan.FromSeconds(FlushTimeoutSecs));
             }
             catch (Exception ex)
             {
@@ -96,18 +97,18 @@ namespace Serilog.Sinks.Kafka
             return Task.CompletedTask;
         }
 
-        private void ConfigureKafkaConnection()
+        private IProducer<Null, byte[]> ConfigureKafkaConnection()
         {
-            _producer = new ProducerBuilder<Null, byte[]>(_producerConfig)
-                .SetErrorHandler(_errorHandler)
-                .SetLogHandler((pro, msg) =>
-                {
-                    if (msg.Level <= SyslogLevel.Error)
-                        Log.ForContext(SKIP_KEY, string.Empty).Error($"[Kafka] {msg.Level} {msg.Message}");
-                    else
-                        Log.ForContext(SKIP_KEY, string.Empty).Information($"[Kafka] {msg.Level} {msg.Message}");
-                })
-                .Build();
+            return new ProducerBuilder<Null, byte[]>(_producerConfig)
+                    .SetErrorHandler(_errorHandler)
+                    .SetLogHandler((pro, msg) =>
+                    {
+                        if (msg.Level <= SyslogLevel.Error)
+                            Log.ForContext(SKIP_KEY, string.Empty).Error($"[Kafka] {msg.Level} {msg.Message}");
+                        else
+                            Log.ForContext(SKIP_KEY, string.Empty).Information($"[Kafka] {msg.Level} {msg.Message}");
+                    })
+                    .Build();
         }
     }
 }

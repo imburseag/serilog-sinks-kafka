@@ -1,9 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>0.0.5</Version>
+		<Version>0.0.6</Version>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<TargetFramework>netstandard2.0</TargetFramework>
 		<IsPackable>true</IsPackable>
+		<LangVersion>preview</LangVersion>
 		<PackageId>Serilog.Sinks.ConfluentKafka</PackageId>
 		<Title>Serilog.Sinks.Confluent.Kafka</Title>
 		<Authors>Gui.H</Authors>
