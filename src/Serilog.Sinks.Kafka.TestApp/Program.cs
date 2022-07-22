@@ -36,7 +36,7 @@ namespace Serilog.Sinks.Kafka.TestApp
 
             while (true)
             {
-                Thread.Sleep(1000);
+                Thread.Sleep(10);
                 Log.Information("Console Application Test!");
             }
 

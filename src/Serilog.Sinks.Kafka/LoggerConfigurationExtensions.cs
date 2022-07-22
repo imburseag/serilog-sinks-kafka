@@ -19,7 +19,7 @@ namespace Serilog.Sinks.Kafka
         /// <param name="errorHandler">kafka errorHandler</param>
         /// <param name="topic">The topic name.</param>
         /// <returns></returns>
-        public static LoggerConfiguration Kafka(
+        public static LoggerConfiguration KafkaBatch(
             this LoggerSinkConfiguration loggerConfiguration,
             string bootstrapServers = "localhost:9092",
             int batchSizeLimit = 50,
@@ -33,7 +33,7 @@ namespace Serilog.Sinks.Kafka
             Action<IProducer<Null, byte[]>, Error> errorHandler = null,
             ITextFormatter formatter = null)
         {
-            return loggerConfiguration.Kafka(
+            return loggerConfiguration.KafkaBatch(
                 bootstrapServers,
                 batchSizeLimit,
                 period,
@@ -62,8 +62,6 @@ namespace Serilog.Sinks.Kafka
             this LoggerSinkConfiguration loggerConfiguration,
             Func<LogEvent, string> topicDecider,
             string bootstrapServers = "localhost:9092",
-            int batchSizeLimit = 50,
-            int period = 5,
             SecurityProtocol securityProtocol = SecurityProtocol.Plaintext,
             SaslMechanism? saslMechanism = null,
             string saslUsername = null,
@@ -74,8 +72,6 @@ namespace Serilog.Sinks.Kafka
         {
             return loggerConfiguration.Kafka(
                 bootstrapServers,
-                batchSizeLimit,
-                period,
                 securityProtocol,
                 saslMechanism,
                 saslUsername,
@@ -92,19 +88,28 @@ namespace Serilog.Sinks.Kafka
             string topic,
             Func<LogEvent, string> topicDecider,
             ProducerConfig producerConfig,
+            Action<IProducer<Null, byte[]>, Error> errorHandler = null,
+            ITextFormatter formatter = null)
+        {
+            return loggerConfiguration.Kafka(producerConfig, topic, topicDecider, errorHandler, formatter);
+        }
+
+        public static LoggerConfiguration KafkaBatch(
+            this LoggerSinkConfiguration loggerConfiguration,
+            string topic,
+            Func<LogEvent, string> topicDecider,
+            ProducerConfig producerConfig,
             int batchSizeLimit = 50,
             int period = 5,
             Action<IProducer<Null, byte[]>, Error> errorHandler = null,
             ITextFormatter formatter = null)
         {
-            return loggerConfiguration.Kafka(producerConfig, topic, batchSizeLimit, period, topicDecider, errorHandler, formatter);
+            return loggerConfiguration.KafkaBatch(producerConfig, topic, batchSizeLimit, period, topicDecider, errorHandler, formatter);
         }
 
         private static LoggerConfiguration Kafka(
             this LoggerSinkConfiguration loggerConfiguration,
             string bootstrapServers,
-            int batchSizeLimit,
-            int period,
             SecurityProtocol securityProtocol,
             SaslMechanism? saslMechanism,
             string saslUsername,
@@ -123,10 +128,54 @@ namespace Serilog.Sinks.Kafka
                 SaslUsername = saslUsername,
                 SaslPassword = saslPassword,
                 SslCaLocation = sslCaLocation
+            }, topic, topicDecider, errorHandler, formatter);
+        }
+
+        private static LoggerConfiguration KafkaBatch(
+            this LoggerSinkConfiguration loggerConfiguration,
+            string bootstrapServers,
+            int batchSizeLimit,
+            int period,
+            SecurityProtocol securityProtocol,
+            SaslMechanism? saslMechanism,
+            string saslUsername,
+            string saslPassword,
+            string sslCaLocation,
+            string topic,
+            Func<LogEvent, string> topicDecider,
+            Action<IProducer<Null, byte[]>, Error> errorHandler,
+            ITextFormatter formatter)
+        {
+            return loggerConfiguration.KafkaBatch(new ProducerConfig()
+            {
+                BootstrapServers = bootstrapServers,
+                SecurityProtocol = securityProtocol,
+                SaslMechanism = saslMechanism,
+                SaslUsername = saslUsername,
+                SaslPassword = saslPassword,
+                SslCaLocation = sslCaLocation
             }, topic, batchSizeLimit, period, topicDecider, errorHandler, formatter);
         }
 
         private static LoggerConfiguration Kafka(
+           this LoggerSinkConfiguration loggerConfiguration,
+           ProducerConfig producerConfig,
+           string topic,
+           Func<LogEvent, string> topicDecider,
+           Action<IProducer<Null, byte[]>, Error> errorHandler,
+           ITextFormatter formatter)
+        {
+            var kafkaSink = new KafkaSink(
+                producerConfig,
+                topic,
+                topicDecider,
+                formatter, errorHandler);
+
+            return loggerConfiguration
+                .Sink(kafkaSink);
+        }
+
+        private static LoggerConfiguration KafkaBatch(
            this LoggerSinkConfiguration loggerConfiguration,
            ProducerConfig producerConfig,
            string topic,
@@ -136,7 +185,7 @@ namespace Serilog.Sinks.Kafka
            Action<IProducer<Null, byte[]>, Error> errorHandler,
            ITextFormatter formatter)
         {
-            var kafkaSink = new KafkaSink(
+            var kafkaSink = new KafkaBatchedSink(
                 producerConfig,
                 topic,
                 topicDecider,

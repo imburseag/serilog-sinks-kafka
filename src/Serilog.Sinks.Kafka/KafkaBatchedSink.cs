@@ -8,15 +8,16 @@ using System.Text;
 using System.Threading.Tasks;
 using Confluent.Kafka;
 using Serilog.Context;
-using Serilog.Core;
 using Serilog.Events;
 using Serilog.Formatting;
 using Serilog.Sinks.PeriodicBatching;
 
 namespace Serilog.Sinks.Kafka
 {
-    public class KafkaSink : ILogEventSink
+    public class KafkaBatchedSink : IBatchedLogEventSink
     {
+        private const int FlushTimeoutSecs = 10;
+
         private readonly TopicPartition _globalTopicPartition;
         private readonly ITextFormatter _formatter;
         private readonly Func<LogEvent, string> _topicDecider;
@@ -26,7 +27,7 @@ namespace Serilog.Sinks.Kafka
 
         const string SKIP_KEY = "skip-kafka";
 
-        public KafkaSink(
+        public KafkaBatchedSink(
             ProducerConfig producerConfig,
             string topic = null,
             Func<LogEvent, string> topicDecider = null,
@@ -54,28 +55,45 @@ namespace Serilog.Sinks.Kafka
             ConfigureKafkaConnection();
         }
 
-        public void Emit(LogEvent logEvent)
+        public Task OnEmptyBatchAsync() => Task.CompletedTask;
+
+        public Task EmitBatchAsync(IEnumerable<LogEvent> batch)
         {
-            if (logEvent.Properties.ContainsKey(SKIP_KEY))
-                return;
-
-            Message<Null, byte[]> message;
-
-            var topicPartition = _topicDecider == null
-                ? _globalTopicPartition
-                : new TopicPartition(_topicDecider(logEvent), Partition.Any);
-
-            using (var render = new StringWriter(CultureInfo.InvariantCulture))
+            try
             {
-                _formatter.Format(logEvent, render);
-
-                message = new Message<Null, byte[]>
+                foreach (var logEvent in batch)
                 {
-                    Value = Encoding.UTF8.GetBytes(render.ToString())
-                };
+                    if (logEvent.Properties.ContainsKey(SKIP_KEY))
+                        continue;
+
+                    Message<Null, byte[]> message;
+
+                    var topicPartition = _topicDecider == null
+                        ? _globalTopicPartition
+                        : new TopicPartition(_topicDecider(logEvent), Partition.Any);
+
+                    using (var render = new StringWriter(CultureInfo.InvariantCulture))
+                    {
+                        _formatter.Format(logEvent, render);
+
+                        message = new Message<Null, byte[]>
+                        {
+                            Value = Encoding.UTF8.GetBytes(render.ToString())
+                        };
+                    }
+
+                    _producer.Produce(topicPartition, message);
+                }
+
+                _producer.Flush(TimeSpan.FromSeconds(FlushTimeoutSecs));
+            }
+            catch (Exception ex)
+            {
+                Log.ForContext(SKIP_KEY, string.Empty).Error(ex, "[Kafka][EmitBatchAsync Error]");
+                Log.ForContext(SKIP_KEY, string.Empty).Information($"[Kafka][batchInfo] {batch.First()?.RenderMessage()} ~ {batch.Last()?.RenderMessage()}");
             }
 
-            _producer.Produce(topicPartition, message);
+            return Task.CompletedTask;
         }
 
         private void ConfigureKafkaConnection()
