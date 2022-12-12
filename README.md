@@ -1,4 +1,8 @@
-# serilog-sinks-kafka
+# serilog-sinks-kafka - no longer maintained
+
+> ⚠️ **WARNING** ⚠️ - As we no longer use this project internally at Imburse we no longer maintain this project. This repository has been archived but will remain public for people to fork if desired.
+
+---
 
 [![CircleCI](https://circleci.com/gh/imburseag/serilog-sinks-kafka/tree/master.svg?style=svg)](https://circleci.com/gh/imburseag/serilog-sinks-kafka/tree/master) [![Nuget](https://img.shields.io/nuget/v/serilog.sinks.confluent.kafka)](https://www.nuget.org/packages/Serilog.Sinks.Confluent.Kafka/) [![NuGet Downloads](https://img.shields.io/nuget/dt/serilog.sinks.confluent.kafka.svg)](https://www.nuget.org/packages/Serilog.Sinks.Confluent.Kafka/)
 
@@ -78,9 +82,9 @@ private static string GetTopicName(LogEvent logEntry)
     var logInfo = logEntry.Properties["LogEntry"] as StructureValue;
     var lookup = logInfo?.Properties.FirstOrDefault(a => a.Name == "some_property_name");
 
-    return (string.Equals(lookup, "valueForTopicA")) 
+    return (string.Equals(lookup, "valueForTopicA"))
       ? "topicA"
-      : "topicB";    
+      : "topicB";
 }
 ```
 
@@ -171,7 +175,7 @@ You can check what properties are supported at the following github https://gith
 
 
 ## Azure EventHubs Recommended Configuration
-If you are running against an Azure EventHub, the following configuration is recommended. 
+If you are running against an Azure EventHub, the following configuration is recommended.
 
 https://github.com/Azure/azure-event-hubs-for-kafka/blob/master/CONFIGURATION.md
 
@@ -184,4 +188,4 @@ SERILOG__KAFKA__RequestTimeoutMs=30000
 SERILOG__KAFKA__Partitioner=ConsistentRandom
 SERILOG__KAFKA__EnableIdempotence=false
 SERILOG__KAFKA__CompressionType=None
-```        
+```
